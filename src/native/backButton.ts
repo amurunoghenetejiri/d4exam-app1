@@ -66,6 +66,11 @@ export async function registerAndroidBackButton(): Promise<() => void> {
     handle = await App.addListener("backButton", ({ canGoBack }) => {
       try {
         const path = window.location.pathname || "/";
+        // Consume Back for the mobile drawer before touching route history.
+        if (document.querySelector('[data-d4-navigation-menu][data-state="open"]')) {
+          window.dispatchEvent(new Event("d4-close-navigation-menu"));
+          return;
+        }
         // Close Settings overlays (manual / help) before leaving the page
         try {
           const w = window as unknown as { __d4SettingsOverlayOpen?: boolean };

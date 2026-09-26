@@ -57,6 +57,11 @@ export function PublicLayout({ children }: { children: ReactNode }) {
   useEffect(() => () => {
     if (navigationTimer.current !== null) window.clearTimeout(navigationTimer.current);
   }, []);
+  useEffect(() => {
+    const closeMenu = () => setOpen(false);
+    window.addEventListener("d4-close-navigation-menu", closeMenu);
+    return () => window.removeEventListener("d4-close-navigation-menu", closeMenu);
+  }, []);
   const appShell = useMemo(() => {
     try {
       return isAppLikeShell();
@@ -131,6 +136,7 @@ export function PublicLayout({ children }: { children: ReactNode }) {
               </Button>
             </SheetTrigger>
             <SheetContent
+              data-d4-navigation-menu
               side="right"
               className="w-[min(100%,20rem)] border-l border-slate-200 bg-white p-0"
               // Ensure body scroll lock is released cleanly when we force-close via setOpen

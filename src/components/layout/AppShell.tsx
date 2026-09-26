@@ -303,6 +303,11 @@ export function AppShell({
     setOpen(false);
     setSearchOpen(false);
   }, [pathname]);
+  useEffect(() => {
+    const closeMenu = () => setOpen(false);
+    window.addEventListener("d4-close-navigation-menu", closeMenu);
+    return () => window.removeEventListener("d4-close-navigation-menu", closeMenu);
+  }, []);
   const t = useT();
   const { data: session } = useSessionUser();
   const { data: school } = useSchoolIdentity(session?.schoolId);
@@ -445,6 +450,7 @@ export function AppShell({
                 </Button>
               </SheetTrigger>
               <SheetContent
+                data-d4-navigation-menu
                 side="left"
                 hideClose
                 className={cn(
