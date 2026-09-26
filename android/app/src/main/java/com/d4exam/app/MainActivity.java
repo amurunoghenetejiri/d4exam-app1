@@ -1,5 +1,7 @@
 package com.d4exam.app;
 
+import android.Manifest;
+import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.net.Uri;
 import android.os.Build;
@@ -7,7 +9,10 @@ import android.os.Bundle;
 import android.view.View;
 import android.view.Window;
 import android.webkit.WebResourceRequest;
+import android.webkit.WebSettings;
 import android.webkit.WebView;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 import com.getcapacitor.Bridge;
 import com.getcapacitor.BridgeActivity;
 import com.getcapacitor.BridgeWebViewClient;
@@ -18,25 +23,79 @@ import com.getcapacitor.BridgeWebViewClient;
  * Online: loads https://d4exam.name.ng inside this WebView so login and all
  * routes work. Offline: errorPath offline.html still inside the WebView.
  *
- * BridgeWebViewClient keeps D4EXAM / Supabase / Firebase in-app (never Chrome).
- * Plugins: ExamImmersive, ScreenShare (MediaProjection), Capgo biometric, push.
+ * Plugins are registered explicitly so they exist even when the WebView loads
+ * the remote server.url (capacitor.plugins.json discovery is unreliable there).
  */
 public class MainActivity extends BridgeActivity {
+  private static final int REQ_POST_NOTIFICATIONS = 8801;
+
   @Override
   public void onCreate(Bundle savedInstanceState) {
     registerPlugin(ExamImmersivePlugin.class);
     registerPlugin(ScreenSharePlugin.class);
+    registerPlugin(ee.forgr.biometric.NativeBiometric.class);
+    registerPlugin(com.capacitorjs.plugins.localnotifications.LocalNotificationsPlugin.class);
+    registerPlugin(com.capacitorjs.plugins.pushnotifications.PushNotificationsPlugin.class);
+    registerPlugin(com.capacitorjs.plugins.camera.CameraPlugin.class);
+    registerPlugin(com.capacitorjs.plugins.splashscreen.SplashScreenPlugin.class);
+    registerPlugin(com.capacitorjs.plugins.statusbar.StatusBarPlugin.class);
+    registerPlugin(com.capacitorjs.plugins.app.AppPlugin.class);
     // server.url loads D4EXAM inside this WebView; never hand off to Chrome.
     super.onCreate(savedInstanceState);
     applyChromeColors();
+    tagNativeUserAgent();
     installInAppNavigationClient();
+    requestNotificationPermission();
   }
 
   @Override
   public void onResume() {
     super.onResume();
     applyChromeColors();
+    tagNativeUserAgent();
     installInAppNavigationClient();
+  }
+
+  /**
+   * Android 13+ requires an explicit runtime grant before ANY notification,
+   * including the MediaProjection foreground-service notification that screen
+   * sharing depends on. Ask natively at launch — a remote page cannot.
+   */
+  private void requestNotificationPermission() {
+    try {
+      if (Build.VERSION.SDK_INT < 33) return;
+      if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS)
+          == PackageManager.PERMISSION_GRANTED) {
+        return;
+      }
+      ActivityCompat.requestPermissions(
+          this, new String[] {Manifest.permission.POST_NOTIFICATIONS}, REQ_POST_NOTIFICATIONS);
+    } catch (Throwable ignored) {
+      // Never block launch
+    }
+  }
+
+  /**
+   * Mark the WebView user agent so the web app knows it runs inside the APK
+   * even while loading the remote https origin, where isNativePlatform() can
+   * be false. Without this, fingerprint + native notifications are skipped.
+   */
+  private void tagNativeUserAgent() {
+    try {
+      Bridge bridge = getBridge();
+      if (bridge == null) return;
+      WebView webView = bridge.getWebView();
+      if (webView == null) return;
+      WebSettings settings = webView.getSettings();
+      if (settings == null) return;
+      String ua = settings.getUserAgentString();
+      if (ua == null) ua = "";
+      if (!ua.contains("D4EXAM_ANDROID_NATIVE")) {
+        settings.setUserAgentString(ua.trim() + " D4EXAM_ANDROID_NATIVE Capacitor");
+      }
+    } catch (Throwable ignored) {
+      // Never block launch
+    }
   }
 
   /**

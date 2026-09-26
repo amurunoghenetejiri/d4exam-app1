@@ -37,9 +37,21 @@ function readNativeFlag(): boolean {
   return false;
 }
 
+/** MainActivity stamps this into the WebView user agent (remote or bundled). */
+const NATIVE_UA_TAG = "D4EXAM_ANDROID_NATIVE";
+
+function hasNativeUaTag(): boolean {
+  try {
+    return (navigator.userAgent || "").includes(NATIVE_UA_TAG);
+  } catch {
+    return false;
+  }
+}
+
 export function getRuntimePlatform(): RuntimePlatform {
   if (typeof window === "undefined") return "unknown";
   const w = window as CapWindow;
+  if (hasNativeUaTag()) return "android";
   const cap = w.Capacitor;
   if (cap) {
     try {
@@ -85,6 +97,12 @@ export function getRuntimePlatform(): RuntimePlatform {
 export function isNativeShell(): boolean {
   if (typeof window === "undefined") return false;
   const w = window as CapWindow;
+  // Most reliable signal inside the APK, including when the WebView loads the
+  // remote server.url where Capacitor.isNativePlatform() may be unavailable.
+  if (hasNativeUaTag()) {
+    persistNativeFlag();
+    return true;
+  }
   try {
     if (w.Capacitor?.isNativePlatform?.()) {
       persistNativeFlag();
