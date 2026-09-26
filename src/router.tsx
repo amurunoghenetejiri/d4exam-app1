@@ -1,13 +1,25 @@
 import { QueryClient } from "@tanstack/react-query";
-import { createRouter, createHashHistory, createBrowserHistory } from "@tanstack/react-router";
+import { createRouter, createHashHistory, createBrowserHistory, Link } from "@tanstack/react-router";
+import { useEffect, useState } from "react";
 import { routeTree } from "./routeTree.gen";
 import { isOnlineNow } from "@/lib/offline-sync";
 
 function DefaultPending() {
+  const [slow, setSlow] = useState(false);
+  useEffect(() => {
+    const timer = window.setTimeout(() => setSlow(true), 8000);
+    return () => window.clearTimeout(timer);
+  }, []);
   return (
     <div className="flex min-h-[40vh] flex-col items-center justify-center gap-3 py-12">
       <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
       <p className="text-sm text-slate-500">Loading page…</p>
+      {slow && (
+        <div className="flex items-center gap-4 text-sm">
+          <Link to="/" className="font-semibold text-primary underline">Go home</Link>
+          <button type="button" className="font-semibold text-primary underline" onClick={() => window.location.reload()}>Retry</button>
+        </div>
+      )}
     </div>
   );
 }
