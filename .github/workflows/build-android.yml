@@ -185,9 +185,9 @@ jobs:
           bunx cap sync android
           python3 scripts/ensure-capacitor-plugins.py
           if [ -f android/app/build.gradle ]; then
-            sed -i 's/versionCode [0-9]*/versionCode 43/' android/app/build.gradle || true
-            sed -i 's/versionName "[^"]*"/versionName "1.4.3-biometric"/' android/app/build.gradle || true
-            echo "OK: versionName 1.4.3-biometric"
+            sed -i 's/versionCode [0-9]*/versionCode 44/' android/app/build.gradle || true
+            sed -i 's/versionName "[^"]*"/versionName "1.4.4"/' android/app/build.gradle || true
+            echo "OK: versionName 1.4.4"
           fi
           python3 scripts/force-local-capacitor-assets.py || true
           if [ -f android/variables.gradle ]; then
@@ -228,7 +228,7 @@ jobs:
           echo "OK: biometric plugin linked"
           chmod +x android/gradlew
           grep -q 'ExamImmersivePlugin' android/app/src/main/java/com/d4exam/app/MainActivity.java
-          echo "OK: sync complete — Vercel WebView shell + biometric"
+          echo "OK: sync complete — production WebView shell + biometric"
 
       - name: Build debug APK
         run: |
@@ -293,9 +293,7 @@ jobs:
             Sideload install for D4EXAM (not Play Store).
 
             **Install / Update URL**
-            https://github.com/amurunoghenetejiri/d4exam-platform/releases/download/apk-latest/d4exam.apk
-
-            Includes fingerprint (NativeBiometric) + multi-account switch fixes.
+            https://github.com/amurunoghenetejiri/d4exam-app1/releases/download/apk-latest/d4exam.apk
 
             Built from commit ${{ github.sha }}
           files: /tmp/apk-out/d4exam.apk
