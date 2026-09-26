@@ -8,3 +8,5 @@
 > Commits you push to the connected branch sync back to Lovable and show up in
 > the editor, so keep the branch in a working state.
 <!-- LOVABLE:END -->
+
+- Mobile navigation drawers listen for `d4-close-navigation-menu` and close on pathname changes, so hardware Back and route transitions release their focus traps before navigating.
