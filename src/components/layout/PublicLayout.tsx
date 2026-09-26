@@ -45,6 +45,18 @@ const menuGroups = [
 export function PublicLayout({ children }: { children: ReactNode }) {
   const [open, setOpen] = useState(false);
   const navigate = useNavigate();
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const navigationTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => {
+    setOpen(false);
+    if (navigationTimer.current !== null) {
+      window.clearTimeout(navigationTimer.current);
+      navigationTimer.current = null;
+    }
+  }, [pathname]);
+  useEffect(() => () => {
+    if (navigationTimer.current !== null) window.clearTimeout(navigationTimer.current);
+  }, []);
   const appShell = useMemo(() => {
     try {
       return isAppLikeShell();
@@ -59,18 +71,14 @@ export function PublicLayout({ children }: { children: ReactNode }) {
    * where the menu stays open and the route never changes.
    */
   function goTo(to: string) {
+    if (navigationTimer.current !== null) return;
     setOpen(false);
     // Let the close animation start, then navigate. Works on Capacitor WebView.
-    window.setTimeout(() => {
-      try {
-        void navigate({ to: to as never });
-      } catch {
-        try {
-          window.location.assign(to);
-        } catch {
-          window.location.href = to;
-        }
-      }
+    navigationTimer.current = window.setTimeout(() => {
+      navigationTimer.current = null;
+      void navigate({ to: to as never }).catch(() => {
+        window.location.assign(to);
+      });
     }, 80);
   }
 
