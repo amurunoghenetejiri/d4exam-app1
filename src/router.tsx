@@ -3,6 +3,7 @@ import { createRouter, createHashHistory, createBrowserHistory, Link } from "@ta
 import { useEffect, useState } from "react";
 import { routeTree } from "./routeTree.gen";
 import { isOnlineNow } from "@/lib/offline-sync";
+import { Button } from "@/components/ui/button";
 
 function DefaultPending() {
   const [slow, setSlow] = useState(false);
@@ -17,7 +18,7 @@ function DefaultPending() {
       {slow && (
         <div className="flex items-center gap-4 text-sm">
           <Link to="/" className="font-semibold text-primary underline">Go home</Link>
-          <button type="button" className="font-semibold text-primary underline" onClick={() => window.location.reload()}>Retry</button>
+          <Button type="button" variant="link" className="h-auto p-0 font-semibold" onClick={() => window.location.reload()}>Retry</Button>
         </div>
       )}
     </div>
