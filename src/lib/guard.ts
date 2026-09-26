@@ -34,6 +34,16 @@ export async function requireRole(role: AppRole | AppRole[], queryClient?: Query
   const isIncomplete = (u: SessionUser | null | undefined) =>
     Boolean(u && (needsSchool(u) || (!u.fullName && !u.email)));
 
+  // Fast path: cached complete session with correct role → never wait on network.
+  // This stops menu page switches from freezing while getSession/fetchSessionUser run.
+  if (user && !isIncomplete(user) && user.role && allowed.includes(user.role)) {
+    return { user };
+  }
+  // Also accept when role is only in roles[] (preferred-role edge cases)
+  if (user && !isIncomplete(user) && allowed.some((r) => user!.roles?.includes(r) || user!.role === r)) {
+    return { user };
+  }
+
   // Offline-first: prefer local session cache immediately so menu navigations never stall.
   const online =
     typeof navigator === "undefined" ? true : navigator.onLine !== false;
