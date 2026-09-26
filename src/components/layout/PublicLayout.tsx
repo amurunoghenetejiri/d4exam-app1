@@ -46,7 +46,7 @@ export function PublicLayout({ children }: { children: ReactNode }) {
   const [open, setOpen] = useState(false);
   const navigate = useNavigate();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
-  const navigationTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const navigationTimer = useRef<number | null>(null);
   useEffect(() => {
     setOpen(false);
     if (navigationTimer.current !== null) {
