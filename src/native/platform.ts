@@ -97,6 +97,12 @@ export function getRuntimePlatform(): RuntimePlatform {
 export function isNativeShell(): boolean {
   if (typeof window === "undefined") return false;
   const w = window as CapWindow;
+  // Most reliable signal inside the APK, including when the WebView loads the
+  // remote server.url where Capacitor.isNativePlatform() may be unavailable.
+  if (hasNativeUaTag()) {
+    persistNativeFlag();
+    return true;
+  }
   try {
     if (w.Capacitor?.isNativePlatform?.()) {
       persistNativeFlag();
