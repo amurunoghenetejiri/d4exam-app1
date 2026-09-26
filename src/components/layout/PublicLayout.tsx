@@ -1,5 +1,5 @@
-import { Link, useNavigate } from "@tanstack/react-router";
-import { useMemo, useState, type ReactNode } from "react";
+import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { Menu, X } from "lucide-react";
 import { Logo } from "@/components/brand/Logo";
 import { Watermark } from "@/components/brand/Watermark";
@@ -45,6 +45,23 @@ const menuGroups = [
 export function PublicLayout({ children }: { children: ReactNode }) {
   const [open, setOpen] = useState(false);
   const navigate = useNavigate();
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const navigationTimer = useRef<number | null>(null);
+  useEffect(() => {
+    setOpen(false);
+    if (navigationTimer.current !== null) {
+      window.clearTimeout(navigationTimer.current);
+      navigationTimer.current = null;
+    }
+  }, [pathname]);
+  useEffect(() => () => {
+    if (navigationTimer.current !== null) window.clearTimeout(navigationTimer.current);
+  }, []);
+  useEffect(() => {
+    const closeMenu = () => setOpen(false);
+    window.addEventListener("d4-close-navigation-menu", closeMenu);
+    return () => window.removeEventListener("d4-close-navigation-menu", closeMenu);
+  }, []);
   const appShell = useMemo(() => {
     try {
       return isAppLikeShell();
@@ -59,18 +76,14 @@ export function PublicLayout({ children }: { children: ReactNode }) {
    * where the menu stays open and the route never changes.
    */
   function goTo(to: string) {
+    if (navigationTimer.current !== null) return;
     setOpen(false);
     // Let the close animation start, then navigate. Works on Capacitor WebView.
-    window.setTimeout(() => {
-      try {
-        void navigate({ to: to as never });
-      } catch {
-        try {
-          window.location.assign(to);
-        } catch {
-          window.location.href = to;
-        }
-      }
+    navigationTimer.current = window.setTimeout(() => {
+      navigationTimer.current = null;
+      void navigate({ to: to as never }).catch(() => {
+        window.location.assign(to);
+      });
     }, 80);
   }
 
@@ -123,6 +136,7 @@ export function PublicLayout({ children }: { children: ReactNode }) {
               </Button>
             </SheetTrigger>
             <SheetContent
+              data-d4-navigation-menu
               side="right"
               className="w-[min(100%,20rem)] border-l border-slate-200 bg-white p-0"
               // Ensure body scroll lock is released cleanly when we force-close via setOpen
